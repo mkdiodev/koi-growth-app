@@ -1,38 +1,41 @@
-// Placeholder content for AddKoiButton.tsx
+import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import React from 'react';
-import { Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-interface AddKoiButtonProps {
-  onPress: () => void;
-}
+export default function AddKoiButton() {
+  const insets = useSafeAreaInsets();
 
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 48) / 2;
+  const handlePress = () => {
+    router.push('/modal');
+  };
 
-export default function AddKoiButton({ onPress }: AddKoiButtonProps) {
   return (
-    <TouchableOpacity 
-      style={styles.container} 
-      onPress={onPress}
-      testID="add-koi-button"
+    <TouchableOpacity
+      style={[styles.fab, { bottom: insets.bottom + 20 }]}
+      onPress={handlePress}
+      activeOpacity={0.8}
     >
-      <Plus size={32} color="#2E7D8A" strokeWidth={2} />
+      <Plus size={28} color="#FFFFFF" />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    width: cardWidth,
-    height: cardWidth * 0.8 + 80,
-    backgroundColor: '#F8FFFE',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#2E7D8A',
-    borderStyle: 'dashed',
-    alignItems: 'center',
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#2E7D8A',
     justifyContent: 'center',
-    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
 });

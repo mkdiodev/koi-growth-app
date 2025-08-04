@@ -1,4 +1,5 @@
 // Placeholder content for index.tsx
+import AddKoiButton from '@/components/AddKoiButton';
 import SwipeableKoiCard from '@/components/SwipeableKoiCard';
 import { useKoiStore } from '@/hooks/koi-store';
 import { Koi } from '@/types/koi';
@@ -147,6 +148,7 @@ export default function GalleryScreen() {
             />
           </View>
         </View>
+        <AddKoiButton />
       </LinearGradient>
     </>
   );

@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
-import { Bell, Camera, Droplets, Fish, Search, TrendingUp } from "lucide-react-native";
+import { Bell, Droplets, Fish, Search, TrendingUp } from "lucide-react-native";
 import React from "react";
 import { Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -106,17 +106,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size, focused }: TabIconProps) => (
             <TabIcon focused={focused}>
               <Fish color={focused ? '#FFFFFF' : color} size={focused ? 22 : size} />
-            </TabIcon>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="camera"
-        options={{
-          title: "Camera",
-          tabBarIcon: ({ color, size, focused }: TabIconProps) => (
-            <TabIcon focused={focused}>
-              <Camera color={focused ? '#FFFFFF' : color} size={focused ? 22 : size} />
             </TabIcon>
           ),
         }}
