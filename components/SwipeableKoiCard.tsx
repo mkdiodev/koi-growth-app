@@ -1,19 +1,19 @@
 // Placeholder content for SwipeableKoiCard.tsx
 import { Koi } from '@/types/koi';
 import { Image } from 'expo-image';
-import { Heart, X } from 'lucide-react-native';
 import React from 'react';
 import { Dimensions, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-    Extrapolate,
-    interpolate,
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  Extrapolate,
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ThreeDotMenu from './ThreeDotMenu';
 
 interface SwipeableKoiCardProps {
   koi: Koi;
@@ -22,6 +22,7 @@ interface SwipeableKoiCardProps {
   onPress: () => void;
   isTop: boolean;
   index: number;
+  onDelete: () => void;
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -34,7 +35,8 @@ export default function SwipeableKoiCard({
   onSwipeRight, 
   onPress, 
   isTop, 
-  index 
+  index,
+  onDelete
 }: SwipeableKoiCardProps) {
   const insets = useSafeAreaInsets();
   const translateX = useSharedValue(0);
@@ -114,38 +116,6 @@ export default function SwipeableKoiCard({
     };
   });
 
-  const likeStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateX.value,
-      [0, SWIPE_THRESHOLD],
-      [0, 1],
-      Extrapolate.CLAMP
-    );
-    const scale = interpolate(
-      translateX.value,
-      [0, SWIPE_THRESHOLD],
-      [0.5, 1.2],
-      Extrapolate.CLAMP
-    );
-    return { opacity, transform: [{ scale }] };
-  });
-
-  const nopeStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      translateX.value,
-      [-SWIPE_THRESHOLD, 0],
-      [1, 0],
-      Extrapolate.CLAMP
-    );
-    const scale = interpolate(
-      translateX.value,
-      [-SWIPE_THRESHOLD, 0],
-      [1.2, 0.5],
-      Extrapolate.CLAMP
-    );
-    return { opacity, transform: [{ scale }] };
-  });
-
   const stackStyle = useAnimatedStyle(() => {
     const stackScale = 1 - (index * 0.05);
     const stackTranslateY = index * 8;
@@ -175,6 +145,9 @@ export default function SwipeableKoiCard({
           <View style={styles.photoCount}>
             <Text style={styles.photoCountText}>{koi.photos.length}</Text>
           </View>
+          <View style={styles.menuContainer}>
+            <ThreeDotMenu koiId={koi.id} onDelete={onDelete} />
+          </View>
         </View>
         
         <View style={styles.content}>
@@ -203,18 +176,12 @@ export default function SwipeableKoiCard({
             transition={200}
           />
           
-          <Animated.View style={[styles.actionOverlay, styles.likeOverlay, likeStyle]}>
-            <Heart size={60} color="#2E7D8A" fill="#2E7D8A" />
-            <Text style={[styles.actionText, styles.likeText]}>VIEW</Text>
-          </Animated.View>
-          
-          <Animated.View style={[styles.actionOverlay, styles.nopeOverlay, nopeStyle]}>
-            <X size={60} color="#666" />
-            <Text style={[styles.actionText, styles.nopeText]}>PASS</Text>
-          </Animated.View>
           
           <View style={styles.photoCount}>
             <Text style={styles.photoCountText}>{koi.photos.length}</Text>
+          </View>
+          <View style={styles.menuContainer}>
+            <ThreeDotMenu koiId={koi.id} onDelete={onDelete} />
           </View>
         </View>
         
@@ -268,6 +235,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 16,
+    padding: 6,
   },
   photoCountText: {
     color: '#FFFFFF',

@@ -1,4 +1,5 @@
 // Placeholder content for _layout.tsx
+import GrowthThreeDotMenu from '@/components/GrowthThreeDotMenu';
 import { useKoiStore } from '@/hooks/koi-store';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,7 +18,7 @@ import {
 
 export default function KoiDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { koi } = useKoiStore();
+  const { koi, deletePhoto } = useKoiStore();
   
   const koiData = koi.find(k => k.id === id);
 
@@ -33,6 +34,18 @@ export default function KoiDetailScreen() {
   const sortedPhotos = [...koiData.photos].sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+
+  const handleDeletePhoto = (photoId: string) => {
+    if (id) {
+      deletePhoto(id, photoId);
+    }
+  };
+
+  const handleEditPhoto = (photoId: string) => {
+    if (id) {
+      router.push(`/koi/edit-photo/${id}?photoId=${photoId}`);
+    }
+  };
 
   return (
     <>
@@ -131,6 +144,14 @@ export default function KoiDetailScreen() {
                   {photo.notes && (
                     <Text style={styles.timelineNotes}>{photo.notes}</Text>
                   )}
+                </View>
+                <View style={styles.menuContainer}>
+                  <GrowthThreeDotMenu
+                    koiId={koiData.id}
+                    photoId={photo.id}
+                    onDelete={() => handleDeletePhoto(photo.id)}
+                    onEdit={() => handleEditPhoto(photo.id)}
+                  />
                 </View>
               </View>
             ))}
@@ -257,6 +278,11 @@ const styles = StyleSheet.create({
   },
   timelineContent: {
     flex: 1,
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
   },
   timelineDate: {
     fontSize: 16,

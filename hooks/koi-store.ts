@@ -143,6 +143,32 @@ export const [KoiStoreProvider, useKoiStore] = createContextHook(() => {
     saveKoiMutation.mutate(updatedKoi);
   };
 
+  const updatePhoto = (koiId: string, photoId: string, updates: Partial<KoiPhoto>) => {
+    const currentKoi = koiQuery.data || [];
+    const updatedKoi = currentKoi.map(k => {
+      if (k.id === koiId) {
+        const updatedPhotos = k.photos.map(p =>
+          p.id === photoId ? { ...p, ...updates } : p
+        );
+        return { ...k, photos: updatedPhotos };
+      }
+      return k;
+    });
+    saveKoiMutation.mutate(updatedKoi);
+  };
+
+  const deletePhoto = (koiId: string, photoId: string) => {
+    const currentKoi = koiQuery.data || [];
+    const updatedKoi = currentKoi.map(k => {
+      if (k.id === koiId) {
+        const updatedPhotos = k.photos.filter(p => p.id !== photoId);
+        return { ...k, photos: updatedPhotos };
+      }
+      return k;
+    });
+    saveKoiMutation.mutate(updatedKoi);
+  };
+
   const saveWaterParamsMutation = useMutation({
     mutationFn: async (params: WaterParameter[]) => {
       await AsyncStorage.setItem(WATER_PARAMS_KEY, JSON.stringify(params));
@@ -257,6 +283,8 @@ export const [KoiStoreProvider, useKoiStore] = createContextHook(() => {
     updateKoi,
     addPhotoToKoi,
     deleteKoi,
+    updatePhoto,
+    deletePhoto,
     addWaterParameter,
     updateNotificationSettings,
     requestNotificationPermissions,

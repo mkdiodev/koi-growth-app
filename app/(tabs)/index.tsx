@@ -5,7 +5,7 @@ import { useKoiStore } from '@/hooks/koi-store';
 import { Koi } from '@/types/koi';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, router } from 'expo-router';
-import { Heart, RotateCcw, X } from 'lucide-react-native';
+import { RotateCcw } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
   Platform,
@@ -51,6 +51,12 @@ export default function GalleryScreen() {
     setPassedKoi([]);
   };
 
+  const { deleteKoi } = useKoiStore();
+
+  const handleDelete = (koiId: string) => {
+    deleteKoi(koiId);
+  };
+
   const handleLikeButton = () => {
     if (currentIndex < koi.length) {
       handleSwipeRight();
@@ -94,9 +100,6 @@ export default function GalleryScreen() {
               <Text style={styles.finishedSubtitle}>
                 You&apos;ve viewed all your koi
               </Text>
-              <Text style={styles.statsText}>
-                Liked: {likedKoi.length} • Passed: {passedKoi.length}
-              </Text>
               <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
                 <RotateCcw size={20} color="#FFFFFF" />
                 <Text style={styles.resetButtonText}>Start Over</Text>
@@ -112,28 +115,13 @@ export default function GalleryScreen() {
                 onPress={() => handleKoiPress(koiItem.id)}
                 isTop={index === 0}
                 index={index}
+                onDelete={() => handleDelete(koiItem.id)}
               />
             ))
           )}
         </View>
 
-        {!isFinished && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.passButton]} 
-              onPress={handlePassButton}
-            >
-              <X size={28} color="#666" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.likeButton]} 
-              onPress={handleLikeButton}
-            >
-              <Heart size={28} color="#2E7D8A" fill="#2E7D8A" />
-            </TouchableOpacity>
-          </View>
-        )}
+        
 
         <View style={styles.progressContainer}>
           <Text style={styles.progressText}>
@@ -148,7 +136,9 @@ export default function GalleryScreen() {
             />
           </View>
         </View>
-        <AddKoiButton />
+        <View style={styles.fabContainer}>
+          <AddKoiButton />
+        </View>
       </LinearGradient>
     </>
   );
@@ -157,6 +147,12 @@ export default function GalleryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 1,
   },
   header: {
     paddingHorizontal: 24,

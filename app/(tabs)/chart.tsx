@@ -4,20 +4,19 @@ import { Stack } from 'expo-router';
 import { BarChart3, Filter, Search } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
-    Dimensions,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: screenWidth } = Dimensions.get('window');
-const chartWidth = screenWidth - 40;
-const chartHeight = 200;
 
 interface ChartDataPoint {
   date: Date;
@@ -27,132 +26,100 @@ interface ChartDataPoint {
   koiId: string;
 }
 
-interface LineChartProps {
+interface CustomLineChartProps {
   data: ChartDataPoint[];
   metric: 'length' | 'weight';
   selectedKoi: string[];
 }
 
-const LineChart: React.FC<LineChartProps> = ({ data, metric, selectedKoi }) => {
-  if (data.length === 0) {
+const CustomLineChart: React.FC<CustomLineChartProps> = ({ data, metric, selectedKoi }) => {
+  const chartWidth = screenWidth - 16;
+
+  const filteredData = useMemo(() => {
+    return data.filter(point => 
+      selectedKoi.length === 0 || selectedKoi.includes(point.koiId)
+    );
+  }, [data, selectedKoi]);
+
+  const koiGroups = useMemo(() => {
+    return filteredData.reduce((groups, point) => {
+      if (!groups[point.koiId]) {
+        groups[point.koiId] = [];
+      }
+      groups[point.koiId].push(point);
+      return groups;
+    }, {} as Record<string, ChartDataPoint[]>);
+  }, [filteredData]);
+
+  const chartData = useMemo(() => {
+    const labels: string[] = [];
+    const datasets = Object.entries(koiGroups).map(([koiId, points], index) => {
+      const sortedPoints = points.sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      if (labels.length === 0) {
+        labels.push(...sortedPoints.map(p => p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })));
+      }
+
+      return {
+        data: sortedPoints.map(p => p[metric]),
+        color: (opacity = 1) => `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${opacity})`,
+        strokeWidth: 2,
+        legend: sortedPoints[0]?.koiName || 'Unknown Koi'
+      };
+    });
+
+    return {
+      labels,
+      datasets,
+      legend: datasets.map(d => d.legend)
+    };
+  }, [koiGroups, metric]);
+
+  if (chartData.datasets.length === 0) {
     return (
       <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>No data available</Text>
+        <Text style={styles.emptyText}>No data to display</Text>
       </View>
     );
   }
-
-  const filteredData = data.filter(point => 
-    selectedKoi.length === 0 || selectedKoi.includes(point.koiId)
-  );
-
-  if (filteredData.length === 0) {
-    return (
-      <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>No data for selected koi</Text>
-      </View>
-    );
-  }
-
-  const values = filteredData.map(point => point[metric]);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const valueRange = maxValue - minValue || 1;
-
-  const dates = filteredData.map(point => point.date.getTime());
-  const minDate = Math.min(...dates);
-  const maxDate = Math.max(...dates);
-  const dateRange = maxDate - minDate || 1;
-
-  const koiColors = ['#2E7D8A', '#E74C3C', '#F39C12', '#8E44AD', '#27AE60'];
-  const koiGroups = filteredData.reduce((groups, point) => {
-    if (!groups[point.koiId]) {
-      groups[point.koiId] = [];
-    }
-    groups[point.koiId].push(point);
-    return groups;
-  }, {} as Record<string, ChartDataPoint[]>);
 
   return (
     <View style={styles.chartContainer}>
-      <View style={styles.chart}>
-        {Object.entries(koiGroups).map(([koiId, points], koiIndex) => {
-          const color = koiColors[koiIndex % koiColors.length];
-          const sortedPoints = points.sort((a, b) => a.date.getTime() - b.date.getTime());
-          
-          return (
-            <React.Fragment key={koiId}>
-              {sortedPoints.map((point, index) => {
-                const x = ((point.date.getTime() - minDate) / dateRange) * chartWidth;
-                const y = chartHeight - ((point[metric] - minValue) / valueRange) * chartHeight;
-                
-                return (
-                  <View
-                    key={`${koiId}-${index}`}
-                    style={[
-                      styles.dataPoint,
-                      {
-                        left: x - 4,
-                        top: y - 4,
-                        backgroundColor: color,
-                      },
-                    ]}
-                  />
-                );
-              })}
-              
-              {sortedPoints.length > 1 && sortedPoints.map((point, index) => {
-                if (index === sortedPoints.length - 1) return null;
-                
-                const nextPoint = sortedPoints[index + 1];
-                const x1 = ((point.date.getTime() - minDate) / dateRange) * chartWidth;
-                const y1 = chartHeight - ((point[metric] - minValue) / valueRange) * chartHeight;
-                const x2 = ((nextPoint.date.getTime() - minDate) / dateRange) * chartWidth;
-                const y2 = chartHeight - ((nextPoint[metric] - minValue) / valueRange) * chartHeight;
-                
-                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-                const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-                
-                return (
-                  <View
-                    key={`line-${koiId}-${index}`}
-                    style={[
-                      styles.line,
-                      {
-                        left: x1,
-                        top: y1,
-                        width: length,
-                        backgroundColor: color,
-                        transform: [{ rotate: `${angle}deg` }],
-                      },
-                    ]}
-                  />
-                );
-              })}
-            </React.Fragment>
-          );
-        })}
-        
-        <View style={styles.yAxis}>
-          <Text style={styles.axisLabel}>{maxValue.toFixed(0)}</Text>
-          <Text style={styles.axisLabel}>{((maxValue + minValue) / 2).toFixed(0)}</Text>
-          <Text style={styles.axisLabel}>{minValue.toFixed(0)}</Text>
-        </View>
-      </View>
-      
-      <View style={styles.legend}>
-        {Object.entries(koiGroups).map(([koiId, points], koiIndex) => {
-          const color = koiColors[koiIndex % koiColors.length];
-          const koiName = points[0].koiName;
-          
-          return (
-            <View key={koiId} style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: color }]} />
-              <Text style={styles.legendText}>{koiName}</Text>
-            </View>
-          );
-        })}
-      </View>
+      <LineChart
+        data={chartData}
+        width={chartWidth}
+        height={250}
+        yAxisLabel={metric === 'length' ? '' : ''}
+        yAxisSuffix={metric === 'length' ? ' cm' : ' g'}
+        yAxisInterval={1}
+        chartConfig={{
+          backgroundColor: '#FFFFFF',
+          backgroundGradientFrom: '#FFFFFF',
+          backgroundGradientTo: '#FFFFFF',
+          decimalPlaces: 1,
+          color: (opacity = 1) => `rgba(46, 125, 138, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
+          style: {
+            borderRadius: 16,
+          },
+          propsForDots: {
+            r: '6',
+            strokeWidth: '2',
+          },
+          propsForBackgroundLines: {
+            strokeDasharray: '', 
+            stroke: '#E5E5E5',
+          },
+        }}
+        bezier
+        style={{
+          marginVertical: 8,
+          borderRadius: 16,
+        }}
+        withInnerLines={true}
+        withOuterLines={true}
+        fromZero={true}
+      />
     </View>
   );
 };
@@ -319,7 +286,7 @@ export default function ChartScreen() {
         <Text style={styles.sectionTitle}>
           {selectedMetric === 'length' ? 'Length Growth' : 'Weight Growth'}
         </Text>
-        <LineChart 
+        <CustomLineChart 
           data={chartData} 
           metric={selectedMetric} 
           selectedKoi={selectedKoi}
@@ -535,67 +502,8 @@ const styles = StyleSheet.create({
   chartContainer: {
     marginTop: 20,
   },
-  chart: {
-    height: chartHeight,
-    width: chartWidth,
-    position: 'relative',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  dataPoint: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  line: {
-    position: 'absolute',
-    height: 2,
-    transformOrigin: '0 50%',
-  },
-  yAxis: {
-    position: 'absolute',
-    left: -40,
-    top: 0,
-    height: chartHeight,
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  axisLabel: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 16,
-    gap: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-  },
   emptyChart: {
-    height: chartHeight,
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FAFAFA',
