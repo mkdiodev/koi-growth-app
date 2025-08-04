@@ -6,11 +6,11 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Calendar, Plus, Ruler, Weight } from 'lucide-react-native';
 import React from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 
@@ -140,7 +140,7 @@ export default function KoiDetailScreen() {
         {/* Floating Add Photo Button */}
         <TouchableOpacity 
           style={styles.fabButton}
-          onPress={() => router.push('/(tabs)/camera')}
+          onPress={() => router.push('/camera')}
           testID="add-photo-fab"
         >
           <Plus size={24} color="#FFFFFF" />

@@ -10,12 +10,9 @@ const STORAGE_KEY = 'koi-gallery-data';
 const WATER_PARAMS_KEY = 'water-parameters';
 const NOTIFICATION_SETTINGS_KEY = 'notification-settings';
 
-// Check if we're in Expo Go environment
-const isExpoGo = Platform.OS !== 'web' && __DEV__ && !Platform.constants?.systemName;
-
-// Conditionally import and setup notifications only if not in Expo Go
+// Conditionally import and setup notifications
 let Notifications: any = null;
-if (!isExpoGo && Platform.OS !== 'web') {
+if (Platform.OS !== 'web') {
   try {
     Notifications = require('expo-notifications');
     Notifications.setNotificationHandler({
@@ -184,7 +181,7 @@ export const [KoiStoreProvider, useKoiStore] = createContextHook(() => {
   };
 
   const scheduleNotifications = async (settings: NotificationSettings) => {
-    if (Platform.OS === 'web' || isExpoGo || !Notifications) {
+    if (Platform.OS === 'web' || !Notifications) {
       console.log('Notifications not available in this environment');
       return;
     }
@@ -225,7 +222,7 @@ export const [KoiStoreProvider, useKoiStore] = createContextHook(() => {
   };
 
   const requestNotificationPermissions = async () => {
-    if (Platform.OS === 'web' || isExpoGo || !Notifications) {
+    if (Platform.OS === 'web' || !Notifications) {
       console.log('Notifications not available in this environment');
       return false;
     }
